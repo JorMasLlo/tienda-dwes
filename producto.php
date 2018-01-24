@@ -36,12 +36,14 @@
  else if("exclusive" == $state){
 
  }
- else if("exclusive" == $state){
 
-  }
-?>
-  <div class="row" id='infoProducto' style='position:relative; border:1px solid #ddd; border-radius:4px; padding:4px;' >
+  if ("normal" == $state){?>
+  <div id='infoProducto' class="row" style='position:relative; border:1px solid #ddd; border-radius:4px; padding:4px;' >
+  <?php } else {?>
+  <div style='position:relative;'>
+
       <?php
+    }
         if("normal"==$state){
           echo $producto->getHtml();
         }
@@ -53,8 +55,7 @@
         }
 
        ?>
-<div style='position:relative;'>
-  </div>
+     </div>
   <?php
 
   if("normal"==$state){

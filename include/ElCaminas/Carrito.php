@@ -8,6 +8,7 @@ class Carrito
     protected $connect;
     /** Sin parámetros. Sólo crea la variable de sesión
     */
+
     public function __construct()
     {
         global $connect;
@@ -31,14 +32,33 @@ class Carrito
       unset($_SESSION['carrito']);
       self::__construct();
     }
-    public function howMany(){
-      return count($_SESSION['carrito']);
-    }
+    public function itemExists($id){
+     return isset($_SESSION['carrito'][$id]);
+ }
+ public function getItemCount($id){
+   if (!$this->itemExists($id))
+     return 0;
+   else
+     return $_SESSION['carrito'][$id];
+ }
+ public function howMany(){
+   return array_sum($_SESSION['carrito']);
+ }
     public function createCarro(){
       $this->getRedirect();
       $carroicono= "<li><a href='./carro.php?redirect=jhug' style='color: red;'>El Carro</a></li>";
 
       return $carritoicono;
+    }
+
+    public function getTotal(){
+      $totalX = 0;
+      foreach($_SESSION['carrito'] as $key => $cantidad){
+        $producto = new Producto($key);
+        $totalX = $totalX + ($producto->getPrecioReal()*$cantidad);
+      }
+
+      return $totalX;
     }
     public function toHtml(){
       //NO USAR, de momento
@@ -61,8 +81,7 @@ heredoc;
           $str .=  "<tr><th scope='row'>$i</th><td><a href='" .  $producto->getUrl() . "'>" . $producto->getNombre() . "</a>";
           $str .= "<a class='open-modal' title='Haga clic para ver el detalle del producto'        href='" .  $producto->getUrl() . "'>";
           $str .=     "<span style='color:#000' class='fa fa-external-link'></span>";
-          $str .= "</a></td><td>$cantidad</td><td>" .  $producto->getPrecioReal() ." €</td><td>$subtotalTexto €</td><td><a href='?action=delete&id=".$producto->getId()."'  class='fa fa-times' aria-hidden='true' onclick='return Confirmar()'/></td></tr>";
-          $totalX = $totalX + ($producto->getPrecioReal()*$cantidad);
+          $str .= "</a></td><td>$cantidad</td><td>" .  $producto->getPrecioReal() ." €</td><td>$subtotalTexto €</td><td><a href='?action=delete&cantidad=$cantidad&id=".$producto->getId()."'  class='fa fa-times' aria-hidden='true' onclick='return ConfirmarX()'/></td></tr>";
         }
       }
       $str .= <<<heredoc
@@ -71,9 +90,9 @@ heredoc;
       </table>
 
 heredoc;
-$str .= "<h4 style='text-align: right; font-weight: bold;'>TOTAL CARRITO: ".$totalX." €</h4>
-<a href='". $redirect ."'><button type='button' class='btn btn-danger id='total'>SEGUIR COMPRANDO</button></a>
-<a href='?action=empty' ><button onclick='return Confirmar()' type='button' class='btn btn-danger id='borrar'>CHECK OUT</button></a>";
+$str .= "<h4 style='text-align: right; font-weight: bold;'>TOTAL CARRITO: ".$this->getTotal()." €</h4>
+<a href='". $this->getRedirect() ."'><button type='button' class='btn btn-danger id='total'>SEGUIR COMPRANDO</button></a>
+<a href='?action=empty' ><button onclick='return ConfirmarX()' type='button' class='btn btn-danger id='borrar'>CHECK OUT</button></a>";
 $str .="
 <script src='https://www.paypalobjects.com/api/checkout.js'></script>
 
@@ -115,7 +134,7 @@ $str .="
                 payment: {
                     transactions: [
                         {
-                            amount: { total: '".$totalX."', currency: 'EUR' }
+                            amount: { total: '".$this->getTotal()."', currency: 'EUR' }
                         }
                     ]
                 }
@@ -137,14 +156,7 @@ $str .="
     ";
       return $str;
     }
+
+
 }
 ?>
-
-<script>
-function Confirmar() {
-  if (confirm("¿Seguro que desea realizar esta accion?"))
-    return true;
-  else
-    return false;
-}
-</script>
